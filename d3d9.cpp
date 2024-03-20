@@ -7,6 +7,8 @@ struct vertex_t {
 };
 
 void d3d9Triangle(HWND hwnd, bool* running) {
+	SetWindowText(hwnd, L"D3D9 Example");
+
 	IDirect3D9* pD3D = nullptr;
 	IDirect3DDevice9* pD3DDevice = nullptr;
 
@@ -26,9 +28,9 @@ void d3d9Triangle(HWND hwnd, bool* running) {
 	}
 
 	vertex_t vertices[] = {
-		{ 400, 150, 0, 1.0f,	0xFF00FFFF },
 		{ 600, 450, 0, 1.0f,	0xFFFFFF00 },
 		{ 200, 450, 0, 1.0f,	0xFFFF00FF },
+		{ 400, 150, 0, 1.0f,	0xFF00FFFF },
 	};
 
 	IDirect3DVertexBuffer9* pVB;

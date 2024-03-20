@@ -18,7 +18,15 @@ int main() {
 
 	RegisterClassEx(&wc);
 
-	HWND hwnd = CreateWindow(wc.lpszClassName, L"D3D", WS_OVERLAPPEDWINDOW, 100, 100, 800, 600, GetDesktopWindow(), NULL, wc.hInstance, NULL);
+	RECT rect;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = 800;
+	rect.bottom = 600;
+
+	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+
+	HWND hwnd = CreateWindow(wc.lpszClassName, L"D3D", WS_OVERLAPPEDWINDOW, 100, 100, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, wc.hInstance, NULL);
 	if (hwnd == NULL) {
 		return 0;
 	}

@@ -1,4 +1,5 @@
 #include <d3d10.h>
+#include <exception>
 
 struct vertex_t {
 	FLOAT x, y, z;
@@ -6,6 +7,8 @@ struct vertex_t {
 };
 
 void d3d10Triangle(HWND hwnd, bool* running) {
+	SetWindowText(hwnd, L"D3D10 Example");
+
 	DXGI_SWAP_CHAIN_DESC swapchainDesc = {};
 	swapchainDesc.BufferCount = 1;
 	swapchainDesc.BufferDesc.Width = 800;
@@ -21,48 +24,58 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 
 	IDXGISwapChain* pSwapchain;
 	ID3D10Device* pDevice;
-	D3D10CreateDeviceAndSwapChain(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &swapchainDesc, &pSwapchain, &pDevice);
+	if (FAILED(D3D10CreateDeviceAndSwapChain(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &swapchainDesc, &pSwapchain, &pDevice))) {
+		throw std::exception("D3D10: Failed to create device and swapchain");
+	}
 
 	ID3D10Texture2D* pBackBuffer;
-	pSwapchain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&pBackBuffer);
+	if (FAILED(pSwapchain->GetBuffer(0, __uuidof(ID3D10Texture2D), (LPVOID*)&pBackBuffer))) {
+		throw std::exception("D3D10: Failed to get back buffer");
+	}
 
 	ID3D10RenderTargetView* pRenderTargetView;
-	pDevice->CreateRenderTargetView(pBackBuffer, NULL, &pRenderTargetView);
+	if (FAILED(pDevice->CreateRenderTargetView(pBackBuffer, NULL, &pRenderTargetView))) {
+		throw std::exception("D3D10: Failed to create render target view");
+	}
 
 	pBackBuffer->Release();
 	pDevice->OMSetRenderTargets(1, &pRenderTargetView, NULL);
 
+	RECT hwndRect;
+	GetClientRect(hwnd, &hwndRect);
+
 	D3D10_VIEWPORT viewport = {};
-	viewport.Width = 800;
-	viewport.Height = 600;
+	viewport.Width = hwndRect.right - hwndRect.left;
+	viewport.Height = hwndRect.bottom - hwndRect.top;
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
 	pDevice->RSSetViewports(1, &viewport);
 
-	const char* shaderSource = R"(
-		struct vinput_t {
-			float3 pos : POSITION;
-			float3 color : COLOR;
-		};
-
-		struct voutput_t {
-			float4 pos : SV_POSITION;
-			float3 color : COLOR;
-		};
-
-		voutput_t vsmain(vinput_t input) {
-			voutput_t output;
-			output.pos = float4(input.pos, 1.0f);
-			output.color = input.color;
-			return output;
+	char* shaderSource;
+	{
+		HANDLE file = CreateFile(L"d3d10.hlsl", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (file == INVALID_HANDLE_VALUE) {
+			throw std::exception("D3D10: Failed to open \"d3d10.hlsl\"");
 		}
 
-		float4 psmain(voutput_t input) : SV_TARGET {
-			return float4(input.color, 1.0f);
+		DWORD fileSize = GetFileSize(file, NULL);
+		shaderSource = (char*)malloc(fileSize + 1);
+		if (shaderSource == NULL) {
+			CloseHandle(file);
+			throw std::exception("D3D10: Failed to allocate memory for \"d3d10.hlsl\"");
 		}
-	)";
+
+		if (!ReadFile(file, shaderSource, fileSize, NULL, NULL)) {
+			free(shaderSource);
+			CloseHandle(file);
+			throw std::exception("D3D10: Failed to read \"d3d10.hlsl\"");
+		}
+
+		shaderSource[fileSize] = 0;
+		CloseHandle(file);
+	}
 	
 	ID3D10Blob* vertexBlob;
 	ID3D10Blob* pixelBlob;
@@ -71,26 +84,26 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 	ID3D10VertexShader* pVertexShader;
 	ID3D10PixelShader* pPixelShader;
 
-	if (FAILED(D3D10CompileShader(shaderSource, strlen(shaderSource), "shader.hlsl", nullptr, nullptr, "vsmain", "vs_4_0", 0, &vertexBlob, &errorBlob))) {
+	if (FAILED(D3D10CompileShader(shaderSource, strlen(shaderSource), "d3d10.hlsl", nullptr, nullptr, "vsmain", "vs_4_0", 0, &vertexBlob, &errorBlob))) {
 		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 		errorBlob->Release();
-		return;
+		throw std::exception("D3D10: Failed to compile vertex shader in \"d3d10.hlsl\"");
 	}
 
 	if (FAILED(pDevice->CreateVertexShader(vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), &pVertexShader))) {
 		vertexBlob->Release();
-		return;
+		throw std::exception("D3D10: Failed to create vertex shader from \"d3d10.hlsl\"");
 	}
 
-	if (FAILED(D3D10CompileShader(shaderSource, strlen(shaderSource), "shader.hlsl", nullptr, nullptr, "psmain", "ps_4_0", 0, &pixelBlob, &errorBlob))) {
+	if (FAILED(D3D10CompileShader(shaderSource, strlen(shaderSource), "d3d10.hlsl", nullptr, nullptr, "psmain", "ps_4_0", 0, &pixelBlob, &errorBlob))) {
 		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
 		errorBlob->Release();
-		return;
+		throw std::exception("D3D10: Failed to compile pixel shader in \"d3d10.hlsl\"");
 	}
 
 	if (FAILED(pDevice->CreatePixelShader(pixelBlob->GetBufferPointer(), pixelBlob->GetBufferSize(), &pPixelShader))) {
 		pixelBlob->Release();
-		return;
+		throw std::exception("D3D10: Failed to create pixel shader from \"d3d10.hlsl\"");
 	}
 
 	pDevice->VSSetShader(pVertexShader);
@@ -109,7 +122,7 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 
 	ID3D10InputLayout* pVertexLayout;
 	if (FAILED(pDevice->CreateInputLayout(layout, 2, vertexBlob->GetBufferPointer(), vertexBlob->GetBufferSize(), &pVertexLayout))) {
-		return;
+		throw std::exception("D3D10: Failed to create input layout");
 	}
 
 	vertexBlob->Release();
@@ -117,9 +130,9 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 	pDevice->IASetInputLayout(pVertexLayout);
 
 	vertex_t vertices[] = {
-		{ -0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f },
-		{  0.5f, -0.5f, 0.0f,	1.0f, 0.0f, 1.0f },
 		{  0.0f,  0.5f, 0.0f,	0.0f, 1.0f, 1.0f },
+		{ -0.5f, -0.5f, 0.0f,	1.0f, 0.0f, 1.0f },
+		{  0.5f, -0.5f, 0.0f,	1.0f, 1.0f, 0.0f },
 	};
 
 	D3D10_BUFFER_DESC bufferDesc = {};
@@ -136,7 +149,7 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 
 	ID3D10Buffer* vertexBuffer;
 	if (FAILED(pDevice->CreateBuffer(&bufferDesc, &data, &vertexBuffer))) {
-		return;
+		throw std::exception("D3D10: Failed to create vertex buffer");
 	}
 
 	UINT stride = sizeof(vertex_t);
@@ -158,13 +171,13 @@ void d3d10Triangle(HWND hwnd, bool* running) {
 
 	ID3D10RasterizerState* pRasterizerState;
 	if (FAILED(pDevice->CreateRasterizerState(&rasterizerDesc, &pRasterizerState))) {
-		return;
+		throw std::exception("D3D10: Failed to create rasterizer state");
 	}
 
 	pDevice->RSSetState(pRasterizerState);
 
 	while (*running) {
-		float clearColor[4] = { 0.0f, 0.12f, 0.07f, 1.0f };
+		float clearColor[4] = { 0.1f, 0.05f, 0.12f, 1.0f };
 		pDevice->ClearRenderTargetView(pRenderTargetView, clearColor);
 
 		pDevice->Draw(3, 0);
