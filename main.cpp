@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include "common.hpp"
 
 void d3d9Triangle(HWND hwnd, bool* running);
 void d3d10Triangle(HWND hwnd, bool* running);

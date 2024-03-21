@@ -5,7 +5,7 @@
 ![D3D10 Example](./.rsrc/d3d10.png)
 
 ### D3D11 Example
-- work in progress
+![D3D11 Example](./.rsrc/d3d11.png)
 
 ### D3D12 Example
 - work in progress
