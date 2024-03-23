@@ -8,4 +8,4 @@
 ![D3D11 Example](./.rsrc/d3d11.png)
 
 ### D3D12 Example
-- work in progress
+![D3D12 Example](./.rsrc/d3d12.png)

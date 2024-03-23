@@ -35,11 +35,11 @@ int main() {
 	ShowWindow(hwnd, SW_SHOWDEFAULT);
 	UpdateWindow(hwnd);
 
-	d3d9Triangle(hwnd, &g_running);
+	//d3d9Triangle(hwnd, &g_running);
 	g_running = true;
-	d3d10Triangle(hwnd, &g_running);
+	//d3d10Triangle(hwnd, &g_running);
 	g_running = true;
-	d3d11Triangle(hwnd, &g_running);
+	//d3d11Triangle(hwnd, &g_running);
 	g_running = true;
 	d3d12Triangle(hwnd, &g_running);
 	g_running = true;
