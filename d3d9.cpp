@@ -9,7 +9,7 @@ struct vertex_t {
 };
 
 void d3d9Triangle(HWND hwnd, bool* running) {
-	SetWindowText(hwnd, L"D3D9 Example");
+	SetWindowText(hwnd, L"D3D9 Example (Close to go to D3D10)");
 
 	IDirect3D9* pD3D = nullptr;
 	IDirect3DDevice9* pD3DDevice = nullptr;

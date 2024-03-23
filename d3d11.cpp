@@ -74,7 +74,7 @@ IDXGISwapChain1* createSwapchain(HWND hwnd, ID3D11Device* device) {
 }
 
 void d3d11Triangle(HWND hwnd, bool* running) {
-	SetWindowText(hwnd, L"D3D11 Example");
+	SetWindowText(hwnd, L"D3D11 Example (Close to go to D3D12)");
 
 	ID3D11Device* pDevice = nullptr;
 	ID3D11DeviceContext* pDeviceContext = nullptr;

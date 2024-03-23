@@ -8,7 +8,7 @@ struct vertex_t {
 };
 
 void d3d10Triangle(HWND hwnd, bool* running) {
-	SetWindowText(hwnd, L"D3D10 Example");
+	SetWindowText(hwnd, L"D3D10 Example (Close to go to D3D11)");
 
 	RECT hwndRect;
 	GetClientRect(hwnd, &hwndRect);
